@@ -2,7 +2,7 @@
 
 ## Índice
 
-* [1. Preámbulo](#1-pre%C3%A1mbulo)
+* [1. Preámbulo](#1-pre%C3%A1mbulo) 
 * [2. Resumen del proyecto](#2-resumen-del-proyecto)
 * [3. Objetivos de aprendizaje](#3-objetivos-de-aprendizaje)
 * [4. Consideraciones generales](#4-consideraciones-generales)
@@ -537,5 +537,6 @@ Te recomendamos explorar las siguientes opciones:
 * [Postman](https://www.getpostman.com)
 * [Variable de entorno - Wikipedia](https://es.wikipedia.org/wiki/Variable_de_entorno)
 * [`process.env` - Node.js docs](https://nodejs.org/api/process.html#process_process_env)
-#   b q A p i - p o s t g r e s q l  
+#   b q A p i - p o s t g r e s q l 
+ 
  
