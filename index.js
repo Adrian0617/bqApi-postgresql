@@ -4,9 +4,12 @@ const authMiddleware = require('./middleware/auth');
 const errorHandler = require('./middleware/error');
 const routes = require('./routes');
 const pkg = require('./package.json');
+const { createTables } = require('./models/Schemas');
 
 const { port, secret } = config;
 const app = express();
+
+createTables()
 
 app.set('config', config);
 app.set('pkg', pkg);
