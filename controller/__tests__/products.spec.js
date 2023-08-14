@@ -1,35 +1,26 @@
-const request = require("supertest");
-const express = require("express");
-const { newDb } = require("pg-mem");
+const { newDb } = require('pg-mem');
+const { tearUp, addUser, tearDown, addProducts } = require('../../models/Schemas');
 
-const app = express();
-const db = newDb();
+describe('Database Tests', () => {
+  let db;
 
+  beforeEach(async () => {
+    db = newDb();
+    // loadExtensions(db);
+    await tearUp(db);
+  });
 
-app.get("/test", async (req, res) => {
-  const products = await db.public.many(`SELECT * FROM products`);
-  res.json(products);
-});
+  afterEach(async () => {
+    await tearDown(db);
+  });
 
-beforeAll(async () => {
-    await db.public.many(`create table products(id text, name text, price int);
-    INSERT INTO products (id, name, price)
-    VALUES ('1','prueba', 20000);`)
+  it('should add a user', async () => {
+    const userId = await addUser(db);
+    expect(userId).to.be.a('number');
+  });
 
-    const products = await db.public.many(`SELECT * FROM products`);
-});
-
-afterAll(async () => {
-    // await tearDown(db);    
-});
-
-describe("API Tests", () => {
-  it("validate route and exist product", async () => {
-    const response = await request(app).get("/test");
-    expect(response.status).toBe(200);
-    expect(response.body.length).toBe(1); 
+  it('should add a product', async () => {
+    const productId = await addProducts(db);
+    expect(productId).to.be.a('number');
   });
 });
-
-
-
