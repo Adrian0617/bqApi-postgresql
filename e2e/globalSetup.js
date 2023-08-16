@@ -1,9 +1,6 @@
 const path = require('path');
 const { spawn } = require('child_process');
 const kill = require('tree-kill');
-const { MongoClient } = require('mongodb');
-
-const mongoGlobalSetup = require("@shelf/jest-mongodb/lib/setup");
 
 const config = require('../config');
 
@@ -108,15 +105,13 @@ module.exports = () => new Promise((resolve, reject) => {
     return resolve();
   }
 
-  mongoGlobalSetup({rootDir: __dirname}).then(async () => {
-
     console.info('\n Starting local server...');
 
     const child = spawn(/^win/.test(process.platform) ? 'npm.cmd' : 'npm', ['start', port],
       {
         cwd: path.resolve(__dirname, "../"),
         stdio: ["ignore", "pipe", "pipe"],
-        env: { PATH: process.env.PATH, MONGO_URL: process.env.MONGO_URL }
+        env: { PATH: process.env.PATH, NODE_ENV: "test" }
       }
     );
 
@@ -148,7 +143,6 @@ module.exports = () => new Promise((resolve, reject) => {
         console.log('there was an error');
         kill(child.pid, 'SIGKILL', () => reject(err));
       })
-    }).catch((error)=> console.log(error));
 });
 
 // Export globals - ugly... :-(

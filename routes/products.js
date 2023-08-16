@@ -25,7 +25,7 @@ module.exports = (app, nextMain) => {
    * @code {200} si la autenticación es correcta
    * @code {401} si no hay cabecera de autenticación
    */
-  app.get("/products",requireAuth, getProducts);
+  app.get("/products",requireAdmin, getProducts);
 
   /**
    * @name GET /products/:productId
