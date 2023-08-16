@@ -17,19 +17,33 @@ module.exports = (secret) => (req, resp, next) => {
     if (err) {
       return next(403);
     }
+    const [type, token] = authorization.split(' ');
 
+    if (type.toLowerCase() !== 'bearer') {
+      return next();
+    }
+
+    jwt.verify(token, secret, (err, decodedToken) => {
+      if (err) {
+        return next(403);
+      }
+      req.decodedToken = decodedToken;
+      next()
+      // TODO: Verificar identidad del usuario usando `decodeToken.uid`
+    });
     // TODO: Verificar identidad del usuario usando `decodeToken.uid`
+
   });
 };
 
 module.exports.isAuthenticated = (req) => (
   // TODO: decidir por la informacion del request si la usuaria esta autenticada
-  true
-);
+  req.decodedToken
+)
 
 module.exports.isAdmin = (req) => (
   // TODO: decidir por la informacion del request si la usuaria es admin
-  true
+  req.decodedToken && req.decodedToken.role === "admin"
 );
 
 module.exports.requireAuth = (req, resp, next) => (

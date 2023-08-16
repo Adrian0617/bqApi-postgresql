@@ -1,8 +1,26 @@
+const { app } = require("..");
+const { getDb } = require("../connect");
+const {  tearDown, tearUp, createTableProduct } = require("../models/Schemas");
+
 const {
   fetch,
   fetchAsTestUser,
   fetchAsAdmin,
 } = process;
+
+beforeAll(async () => {
+  await tearUp()
+  await createTableProduct()
+});
+
+afterAll(async () => {
+  try {
+    await tearDown()
+    await getDb.close()
+  } catch (error) {
+    console.log(error, "*************");
+  }
+});
 
 describe('POST /products', () => {
   it('should fail with 401 when no auth', () => (
@@ -20,25 +38,29 @@ describe('POST /products', () => {
       .then((resp) => expect(resp.status).toBe(400))
   ));
 
-  it('should create product as admin', () => (
-    fetchAsAdmin('/products', {
-      method: 'POST',
-      body: { name: 'Test', price: 5 },
-    })
-      .then((resp) => {
-        expect(resp.status).toBe(200);
-        return resp.json();
-      })
-      .then((json) => {
-        expect(typeof json._id).toBe('string');
-        expect(typeof json.name).toBe('string');
-        expect(typeof json.price).toBe('number');
-      })
-  ));
+  it('should create product as admin', async () => {
+    const requestBody = { name: 'Test', price: 5 };
+  
+    try {
+      const response = await fetchAsAdmin('/products', {
+        method: 'POST',
+        body: requestBody,
+      });
+  
+      const responseBody = await response.json();
+  
+      expect(response.status).toBe(200);
+      expect(typeof responseBody.id).toBe('number');
+      expect(typeof responseBody.name).toBe('string');
+      expect(typeof responseBody.price).toBe('number');
+    } catch (error) {
+      console.error(error);
+    }
+  });  
 });
 
-describe('GET /products', () => {
-  it('should get products with Auth', () => (
+describe('GET /products',  () => {
+  it('should get products with Auth', async() => {
     fetchAsTestUser('/products')
       .then((resp) => {
         expect(resp.status).toBe(200);
@@ -47,12 +69,12 @@ describe('GET /products', () => {
       .then((json) => {
         expect(Array.isArray(json)).toBe(true);
         json.forEach((product) => {
-          expect(typeof product._id).toBe('string');
+          expect(typeof product.id).toBe('number');
           expect(typeof product.name).toBe('string');
           expect(typeof product.price).toBe('number');
         });
       })
-  ));
+  });
 });
 
 describe('GET /products/:productid', () => {
@@ -65,13 +87,14 @@ describe('GET /products/:productid', () => {
     fetchAsTestUser('/products')
       .then((resp) => {
         expect(resp.status).toBe(200);
+        console.log(resp.status, "desde json");
         return resp.json();
       })
       .then((json) => {
         expect(Array.isArray(json)).toBe(true);
         expect(json.length > 0).toBe(true);
         json.forEach((product) => {
-          expect(typeof product._id).toBe('string');
+          expect(typeof product.id).toBe('number');
           expect(typeof product.name).toBe('string');
           expect(typeof product.price).toBe('number');
         });

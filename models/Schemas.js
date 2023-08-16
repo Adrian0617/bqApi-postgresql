@@ -1,73 +1,83 @@
-const { db } = require("../connect");
+const { adminPassword, adminEmail } = require("../config");
+const { getDb } = require("../connect");
 const { sql } = require("kysely");
 
+const db = getDb()
+
 async function tearUp() {
+
   try {
     await db.schema
-      .createTable("products")
+      .createTable("users").ifNotExists()
       .addColumn("id", "serial", (col) => col.primaryKey())
-      .addColumn("price", "varchar", (col) => col.notNull())
-      .addColumn("name", "varchar", (col) => col.notNull())
-      .addColumn("createdAt", sql`timestamp with time zone`, (cb) =>
-        cb.defaultTo(sql`current_timestamp`)
-      )
-      .execute();
-    addProducts(db)
-  } catch (error) {
-    // console.log("products error",error);
-  }
-  try {
-    await db.schema
-      .createTable("users")
-      .addColumn("id", "serial", (col) => col.primaryKey())
-      .addColumn("name", "varchar", (col) => col.notNull())
+      .addColumn("email", "varchar", (col) => col.notNull().unique())
+      .addColumn("password", "varchar", (col) => col.notNull())
       .addColumn("role", "varchar", (col) => col.notNull())
       .addColumn("createdAt", sql`timestamp with time zone`, (cb) =>
         cb.defaultTo(sql`current_timestamp`)
       )
       .execute();
-    addUser(db);
+    addUser()
   } catch (error) {
     // console.log('users errors');
   }
 }
 
-async function tearDown(db) {
+async function createTableProduct() {
+  try {
+    await db.schema
+      .createTable("products").ifNotExists()
+      .addColumn("id", "serial", (col) => col.primaryKey())
+      .addColumn("price", "integer", (col) => col.notNull())
+      .addColumn("name", "varchar", (col) => col.notNull())
+      .addColumn("createdAt", sql`timestamp with time zone`, (cb) =>
+        cb.defaultTo(sql`current_timestamp`)
+      )
+      .execute();
+  } catch (error) {
+    // console.log("products error",error);
+  }
+}
+
+async function tearDown() {
   await db.schema.dropTable("users").ifExists().execute();
   await db.schema.dropTable("products").ifExists().execute();
 }
 
-async function addUser(db) {
+async function addUser() {
   const user = await db
     .insertInto("users")
     .values([
       {
-        name: "adrian",
-        role: "admin",
+        "id": 1,
+        "email": adminEmail,
+        "password": adminPassword,
+        "role": "admin",
       },
     ])
-    .returning(["name", "role"])
+    .returning(["email", "password", "id", "role"])
     .execute();
-  return user[0].id;
+  return user[0];
 }
 
-async function addProducts(db) {
-  const product = await db
-    .insertInto("products")
-    .values([
-      {
-        name: "snadwich",
-        price: 2330,
-      },
-    ])
-    .returning(["id", "name"])
-    .execute();
-  return product[0].id;
-}
+// async function addProducts() {
+//   const product = await db
+//     .insertInto("products")
+//     .values([
+//       {
+//         id: "1",
+//         name: "snadwich",
+//         price: 2330,
+//       },
+//     ])
+//     .returning(["id", "name"])
+//     .execute();
+//   return product[0].id;
+// }
 
 module.exports = {
   tearUp,
   addUser,
   tearDown,
-  addProducts
+  createTableProduct
 };

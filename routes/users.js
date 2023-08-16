@@ -9,7 +9,10 @@ const {
   getUsers,
 } = require('../controller/users');
 
-const initAdminUser = (app, next) => {
+const { getDb } = require('../connect');
+const { tearUp, tearDown, addUser } = require('../models/Schemas');
+
+const initAdminUser = async (app, next) => {
   const { adminEmail, adminPassword } = app.get('config');
   if (!adminEmail || !adminPassword) {
     return next();
@@ -24,7 +27,25 @@ const initAdminUser = (app, next) => {
   // TODO: crear usuaria admin
   // Primero ver si ya existe adminUser en base de datos
   // si no existe, hay que guardarlo
+  const db = getDb()
+  if (process.env.NODE_ENV === 'test') {
+    await tearDown(db)
+  }
+  await tearUp()
 
+  try {
+    const person = await db
+      .selectFrom('users')
+      .select(['id', 'email', 'password', "role"])
+      .where('email', '=', adminEmail)
+      .execute();
+
+    if (!person.length) {
+      const res = await addUser()
+      console.log(res);
+    }
+  } catch (error) {
+  }
   next();
 };
 
@@ -117,9 +138,24 @@ module.exports = (app, next) => {
    * @code {401} si no hay cabecera de autenticación
    * @code {403} si ya existe usuaria con ese `email`
    */
-  app.post('/users', requireAdmin, (req, resp, next) => {
+  app.post('/users', async (req, resp, next) => {
     // TODO: implementar la ruta para agregar
     // nuevos usuarios
+    const user = await getDb().insertInto("users")
+      .values([
+        {
+          "email": req.body.email,
+          "password": req.body.password,
+          "role": "admin",
+        },
+      ])
+      .returning(["email", "password", "id", "role"])
+      .execute();
+
+    if (user) {
+      resp.send(user)
+    }
+
   });
 
   /**
