@@ -1,6 +1,5 @@
 const { app } = require("..");
-const { getDb } = require("../connect");
-const {  tearDown, tearUp, createTableProduct } = require("../models/Schemas");
+const { setup } = require("../models/Schemas");
 
 const {
   fetch,
@@ -9,17 +8,7 @@ const {
 } = process;
 
 beforeAll(async () => {
-  await tearUp()
-  await createTableProduct()
-});
-
-afterAll(async () => {
-  try {
-    await tearDown()
-    await getDb.close()
-  } catch (error) {
-    console.log(error, "*************");
-  }
+  await setup()
 });
 
 describe('POST /products', () => {
@@ -38,29 +27,26 @@ describe('POST /products', () => {
       .then((resp) => expect(resp.status).toBe(400))
   ));
 
-  it('should create product as admin', async () => {
-    const requestBody = { name: 'Test', price: 5 };
-  
-    try {
-      const response = await fetchAsAdmin('/products', {
-        method: 'POST',
-        body: requestBody,
-      });
-  
-      const responseBody = await response.json();
-  
-      expect(response.status).toBe(200);
-      expect(typeof responseBody.id).toBe('number');
-      expect(typeof responseBody.name).toBe('string');
-      expect(typeof responseBody.price).toBe('number');
-    } catch (error) {
-      console.error(error);
-    }
-  });  
+  it('should create product as admin', () => (
+     fetchAsAdmin('/products', {
+      method: 'POST',
+      body: {id:1, name: 'Test', price: 5 },
+    })
+      .then((resp) => {
+        expect(resp.status).toBe(200);
+        return resp.json();
+      })
+      .then((json) => {
+        console.log(json, "desde json");
+        expect(typeof json.id).toBe('number');
+        expect(typeof json.name).toBe('string');
+        expect(typeof json.price).toBe('number');
+      })
+  ));
 });
 
-describe('GET /products',  () => {
-  it('should get products with Auth', async() => {
+describe('GET /products', () => {
+  it('should get products with Auth', async () => {
     fetchAsTestUser('/products')
       .then((resp) => {
         expect(resp.status).toBe(200);
@@ -82,12 +68,10 @@ describe('GET /products/:productid', () => {
     fetchAsTestUser('/products/notarealproduct')
       .then((resp) => expect(resp.status).toBe(404))
   ));
-
   it('should get product with Auth', () => (
     fetchAsTestUser('/products')
       .then((resp) => {
         expect(resp.status).toBe(200);
-        console.log(resp.status, "desde json");
         return resp.json();
       })
       .then((json) => {
@@ -160,7 +144,7 @@ describe('PUT /products/:productid', () => {
   it('should update product as admin', () => (
     fetchAsAdmin('/products', {
       method: 'POST',
-      body: { name: 'Test', price: 10 },
+      body: {id:"1", name: 'Test', price: 10 },
     })
       .then((resp) => {
         expect(resp.status).toBe(200);

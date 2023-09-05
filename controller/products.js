@@ -13,20 +13,21 @@ module.exports = {
 
   createProduct: async (req, resp, next) => {
 
-    const productJson = {
-      name: req.body.name,
-      price: req.body.price,
-    }
+    const productJson = req.body
 
-    try {
-      await getDb()
-        .insertInto("products")
-        .values(productJson)
-        .executeTakeFirst();
-      resp.status(200).json(productJson);
-    } catch (error) {
+    getDb()
+    .insertInto("products")
+    .values(productJson)
+    .returning(['id', 'name', 'price'])
+    .executeTakeFirstOrThrow()
+    .then((product) => {
+      resp.status(200).json(product);
+    })
+    .catch((error) => {
       resp.send(error);
-    }
+    });
+
+
 
   },
 };

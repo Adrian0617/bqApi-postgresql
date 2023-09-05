@@ -10,42 +10,20 @@ const {
 } = require('../controller/users');
 
 const { getDb } = require('../connect');
-const { tearUp, tearDown, addUser } = require('../models/Schemas');
+const { setup, tearDown } = require('../models/Schemas');
 
 const initAdminUser = async (app, next) => {
   const { adminEmail, adminPassword } = app.get('config');
   if (!adminEmail || !adminPassword) {
     return next();
   }
-
-  const adminUser = {
-    email: adminEmail,
-    password: bcrypt.hashSync(adminPassword, 10),
-    roles: { admin: true },
-  };
+  //Setup valida si no existe la BD de user y crea el primer usuario como admin
+  await setup()
 
   // TODO: crear usuaria admin
   // Primero ver si ya existe adminUser en base de datos
   // si no existe, hay que guardarlo
-  const db = getDb()
-  if (process.env.NODE_ENV === 'test') {
-    await tearDown(db)
-  }
-  await tearUp()
 
-  try {
-    const person = await db
-      .selectFrom('users')
-      .select(['id', 'email', 'password', "role"])
-      .where('email', '=', adminEmail)
-      .execute();
-
-    if (!person.length) {
-      const res = await addUser()
-      console.log(res);
-    }
-  } catch (error) {
-  }
   next();
 };
 
