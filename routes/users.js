@@ -9,17 +9,16 @@ const {
   getUsers,
 } = require('../controller/users');
 
-const initAdminUser = (app, next) => {
+const { getDb } = require('../connect');
+const { setup, tearDown } = require('../models/Schemas');
+
+const initAdminUser = async (app, next) => {
   const { adminEmail, adminPassword } = app.get('config');
   if (!adminEmail || !adminPassword) {
     return next();
   }
-
-  const adminUser = {
-    email: adminEmail,
-    password: bcrypt.hashSync(adminPassword, 10),
-    roles: { admin: true },
-  };
+  //Setup valida si no existe la BD de user y crea el primer usuario como admin
+  await setup()
 
   // TODO: crear usuaria admin
   // Primero ver si ya existe adminUser en base de datos
@@ -117,9 +116,24 @@ module.exports = (app, next) => {
    * @code {401} si no hay cabecera de autenticación
    * @code {403} si ya existe usuaria con ese `email`
    */
-  app.post('/users', requireAdmin, (req, resp, next) => {
+  app.post('/users', async (req, resp, next) => {
     // TODO: implementar la ruta para agregar
     // nuevos usuarios
+    const user = await getDb().insertInto("users")
+      .values([
+        {
+          "email": req.body.email,
+          "password": req.body.password,
+          "role": "admin",
+        },
+      ])
+      .returning(["email", "password", "id", "role"])
+      .execute();
+
+    if (user) {
+      resp.send(user)
+    }
+
   });
 
   /**

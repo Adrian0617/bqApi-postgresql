@@ -1,8 +1,15 @@
+const { app } = require("..");
+const { setup } = require("../models/Schemas");
+
 const {
   fetch,
   fetchAsTestUser,
   fetchAsAdmin,
 } = process;
+
+beforeAll(async () => {
+  await setup()
+});
 
 describe('POST /products', () => {
   it('should fail with 401 when no auth', () => (
@@ -21,16 +28,17 @@ describe('POST /products', () => {
   ));
 
   it('should create product as admin', () => (
-    fetchAsAdmin('/products', {
+     fetchAsAdmin('/products', {
       method: 'POST',
-      body: { name: 'Test', price: 5 },
+      body: {id:1, name: 'Test', price: 5 },
     })
       .then((resp) => {
         expect(resp.status).toBe(200);
         return resp.json();
       })
       .then((json) => {
-        expect(typeof json._id).toBe('string');
+        console.log(json, "desde json");
+        expect(typeof json.id).toBe('number');
         expect(typeof json.name).toBe('string');
         expect(typeof json.price).toBe('number');
       })
@@ -38,7 +46,7 @@ describe('POST /products', () => {
 });
 
 describe('GET /products', () => {
-  it('should get products with Auth', () => (
+  it('should get products with Auth', async () => {
     fetchAsTestUser('/products')
       .then((resp) => {
         expect(resp.status).toBe(200);
@@ -47,12 +55,12 @@ describe('GET /products', () => {
       .then((json) => {
         expect(Array.isArray(json)).toBe(true);
         json.forEach((product) => {
-          expect(typeof product._id).toBe('string');
+          expect(typeof product.id).toBe('number');
           expect(typeof product.name).toBe('string');
           expect(typeof product.price).toBe('number');
         });
       })
-  ));
+  });
 });
 
 describe('GET /products/:productid', () => {
@@ -60,7 +68,6 @@ describe('GET /products/:productid', () => {
     fetchAsTestUser('/products/notarealproduct')
       .then((resp) => expect(resp.status).toBe(404))
   ));
-
   it('should get product with Auth', () => (
     fetchAsTestUser('/products')
       .then((resp) => {
@@ -71,7 +78,7 @@ describe('GET /products/:productid', () => {
         expect(Array.isArray(json)).toBe(true);
         expect(json.length > 0).toBe(true);
         json.forEach((product) => {
-          expect(typeof product._id).toBe('string');
+          expect(typeof product.id).toBe('number');
           expect(typeof product.name).toBe('string');
           expect(typeof product.price).toBe('number');
         });
@@ -137,7 +144,7 @@ describe('PUT /products/:productid', () => {
   it('should update product as admin', () => (
     fetchAsAdmin('/products', {
       method: 'POST',
-      body: { name: 'Test', price: 10 },
+      body: {id:"1", name: 'Test', price: 10 },
     })
       .then((resp) => {
         expect(resp.status).toBe(200);
